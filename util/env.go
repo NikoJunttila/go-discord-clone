@@ -11,6 +11,6 @@ func GetEnv(key, defaultValue string) string {
 		slog.Error("Failed to find env", "env", key)
 		return defaultValue
 	}
+	slog.Info("Env value", "val", value)
 	return value
 }
-

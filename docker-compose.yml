@@ -1,9 +1,10 @@
 services:
+  # Database
   db:
     container_name: "goChatDB"
     image: postgres:17-alpine
     volumes:
-      - "./database/postgres-data:/var/lib/postgresql/data:rw"
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
     environment:
@@ -11,7 +12,10 @@ services:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
     restart: unless-stopped
+    networks:
+      - backend
 
+  # Go web service
   server:
     container_name: "goChatServer"
     build:
@@ -19,12 +23,69 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - secretKey=your-secret-key-here
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=go_chat_db
+      - LOKI_URL=http://loki:3100
     depends_on:
       - db
+      - loki
     restart: unless-stopped
+    networks:
+      - backend
+      - logging
+
+  # Loki
+  loki:
+    image: grafana/loki:3.1.1
+    container_name: "loki"
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    networks:
+      - logging
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: "grafana"
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    depends_on:
+      - loki
+    networks:
+      - logging
+
+  # Grafana Alloy (replaces Promtail)
+  alloy:
+    image: grafana/alloy:latest
+    container_name: "alloy"
+    volumes:
+      - ./alloy-config.alloy:/etc/alloy/config.alloy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    networks:
+      - logging
+
+volumes:
+  loki-data:
+  grafana-storage:
+  postgres_data:
+
+networks:
+  backend:
+    driver: bridge
+  logging:
+    driver: bridge
+

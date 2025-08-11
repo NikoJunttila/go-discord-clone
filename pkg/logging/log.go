@@ -3,10 +3,12 @@ package logger
 
 import (
 	"context"
-	"github.com/go-chi/chi/v5/middleware"
+	"discord/util"
 	"log/slog"
 	"os"
 	"strings"
+
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 var defaultLogger *slog.Logger
@@ -19,7 +21,7 @@ func withRequestContext(ctx context.Context) *slog.Logger {
 	if reqID := middleware.GetReqID(ctx); reqID != "" {
 		logger = logger.With("request_id", reqID)
 	}
-
+	//Add these later if necessary for now keep commented out
 	// // Add user ID if available (common pattern)
 	// if userID := getUserID(ctx); userID != "" {
 	// 	logger = logger.With("user_id", userID)
@@ -62,69 +64,51 @@ func Debug(ctx context.Context, msg string, args ...any) {
 	withRequestContext(ctx).Debug(msg, args...)
 }
 
-// Setup initializes the global slog logger for the application.
+// ===== Setup function with Loki integration =====
 // It configures logging based on environment variables:
 // - LOG_LEVEL: debug, info, warn, error (default: info)
 // - LOG_FORMAT: json, text (default: json)
 // - SERVICE_NAME: adds service field to all logs
 // - LOG_ADD_SOURCE: true/false (default: false in production)
 func Setup() *slog.Logger {
-	// Get log level from environment (default: info)
 	level := slog.LevelInfo
-	if logLevel := os.Getenv("LOG_LEVEL"); logLevel != "" {
-		switch strings.ToLower(logLevel) {
-		case "debug":
-			level = slog.LevelDebug
-		case "warn", "warning":
-			level = slog.LevelWarn
-		case "error":
-			level = slog.LevelError
-		}
+	switch strings.ToLower(util.GetEnv("LOG_LEVEL", "info")) {
+	case "debug":
+		level = slog.LevelDebug
+	case "warn", "warning":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
 	}
 
-	// Determine if source should be added (file:line info)
-	addSource := false
-	if sourceEnv := os.Getenv("LOG_ADD_SOURCE"); sourceEnv != "" {
-		addSource = strings.ToLower(sourceEnv) == "true"
-	}
+	addSource := strings.ToLower(util.GetEnv("LOG_ADD_SOURCE", "false")) == "true"
 
 	opts := &slog.HandlerOptions{
 		Level:     level,
 		AddSource: addSource,
 	}
 
-	// Choose handler based on LOG_FORMAT environment variable
-	var handler slog.Handler
-	if getLogFormat() == "text" {
-		handler = slog.NewTextHandler(os.Stdout, opts)
+	serviceName := util.GetEnv("SERVICE_NAME", "go_project")
+	lokiURL := util.GetEnv("LOKI_URL", "")
+
+	// Always log to stdout
+	stdoutHandler := slog.NewJSONHandler(os.Stdout, opts)
+
+	if lokiURL != "" {
+		// Log to both stdout and Loki
+		handler := newMultiHandler(stdoutHandler, newLokiHandler(lokiURL, serviceName))
+		defaultLogger = slog.New(handler).With("service", serviceName)
 	} else {
-		// Default to JSON for production
-		handler = slog.NewJSONHandler(os.Stdout, opts)
+		// Log only to stdout
+		defaultLogger = slog.New(stdoutHandler).With("service", serviceName)
 	}
 
-	logger := slog.New(handler)
-	defaultLogger = logger
+	slog.SetDefault(defaultLogger)
 
-	// Add service name if provided
-	if serviceName := os.Getenv("SERVICE_NAME"); serviceName != "" {
-		logger = logger.With("service", serviceName)
-	}
-
-	// Set as default logger
-	slog.SetDefault(logger)
-
-	// Log initialization
-	logger.Info("global logger initialized",
+	defaultLogger.Info("global logger initialized",
 		"level", level.String(),
-		"format", getLogFormat(),
-		"add_source", addSource)
-	return logger
-}
+		"add_source", addSource,
+		"loki_enabled", lokiURL != "")
 
-// getLogFormat returns the current log format for logging purposes
-func getLogFormat() string {
-	if os.Getenv("LOG_FORMAT") == "text" {
-		return "text"
-	}
-	return "json"
+	return defaultLogger
 }
