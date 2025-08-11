@@ -1,4 +1,6 @@
 temp
+*.exe
 vendor
+discord
 .env
 database
