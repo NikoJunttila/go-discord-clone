@@ -92,15 +92,22 @@ func Setup() *slog.Logger {
 	lokiURL := util.GetEnv("LOKI_URL", "")
 
 	// Always log to stdout
-	stdoutHandler := slog.NewJSONHandler(os.Stdout, opts)
 
 	if lokiURL != "" {
 		// Log to both stdout and Loki
+		stdoutHandler := slog.NewJSONHandler(os.Stdout, opts)
 		handler := newMultiHandler(stdoutHandler, newLokiHandler(lokiURL, serviceName))
 		defaultLogger = slog.New(handler).With("service", serviceName)
 	} else {
 		// Log only to stdout
-		defaultLogger = slog.New(stdoutHandler).With("service", serviceName)
+		if util.GetEnv("LOG_FORMAT", "json") == "text" {
+			stdoutHandler := slog.NewTextHandler(os.Stdout, opts)
+			defaultLogger = slog.New(stdoutHandler)
+		} else {
+			stdoutHandler := slog.NewJSONHandler(os.Stdout, opts)
+			defaultLogger = slog.New(stdoutHandler)
+		}
+		// defaultLogger = slog.New(stdoutHandler).With("service", serviceName)
 	}
 
 	slog.SetDefault(defaultLogger)

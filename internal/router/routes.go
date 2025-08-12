@@ -9,7 +9,7 @@ import (
 
 	"discord/internal/app"
 	"discord/internal/handlers/core"
-	"discord/internal/handlers/user"
+	"discord/internal/handlers/web"
 )
 
 type Routable interface {
@@ -39,7 +39,7 @@ func SetupRouter(a *app.App) http.Handler {
 	v1 := chi.NewRouter()
 	v1modules := []Routable{
 		core.NewCoreHandler(a),
-		user.NewUserHandler(a),
+		web.NewWebHandler(a),
 	}
 	for _, m := range v1modules {
 		v1.Mount(m.Prefix(), m.Routes())

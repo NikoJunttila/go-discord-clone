@@ -1,4 +1,4 @@
-// Package handlers has all http handlers and utility functions for those
+// Package json has helpers to decode and send json data
 package json
 
 import (
