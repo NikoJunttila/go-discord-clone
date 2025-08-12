@@ -1,0 +1,47 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>{{.Title}}</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: auto; }
+        #messages { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 5px; }
+        #input { margin-top: 10px; display: flex; gap: 5px; }
+        input[type=text] { flex: 1; padding: 5px; }
+        button { padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <h1>{{.Title}}</h1>
+    <div id="messages"></div>
+    <div id="input">
+        <input type="text" id="msgInput" placeholder="Type a message..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        const ws = new WebSocket(`ws://${window.location.host}/v1/api/ws`);
+
+        ws.onopen = () => {
+            console.log("Connected to chat");
+        };
+
+        ws.onmessage = (event) => {
+            const msgBox = document.getElementById("messages");
+            const p = document.createElement("p");
+            p.textContent = event.data;
+            msgBox.appendChild(p);
+            msgBox.scrollTop = msgBox.scrollHeight;
+        };
+
+        function sendMessage() {
+            const input = document.getElementById("msgInput");
+            if (input.value.trim() !== "") {
+                ws.send(input.value);
+                input.value = "";
+            }
+        }
+    </script>
+</body>
+</html>

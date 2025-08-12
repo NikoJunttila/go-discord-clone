@@ -11,5 +11,6 @@ func (w *WebHandler) Prefix() string {
 func (w *WebHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/example", w.GetExample)
+	r.Get("/chat", w.GetChat)
 	return r
 }

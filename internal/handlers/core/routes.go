@@ -10,5 +10,6 @@ func (c *CoreHandler) Prefix() string {
 func (c *CoreHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/example", c.GetExample)
+	r.Get("/ws", c.GetWSChat)
 	return r
 }

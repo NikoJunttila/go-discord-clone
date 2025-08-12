@@ -7,10 +7,13 @@ import (
 )
 
 type CoreHandler struct {
-	DB  *db.Queries
-	log *slog.Logger
+	DB   *db.Queries
+	Log  *slog.Logger
+	Chat *ChatHub
 }
 
 func NewCoreHandler(app *app.App) *CoreHandler {
-	return &CoreHandler{DB: app.Queries, log: app.Logger}
+	hub := NewChatHub()
+	go hub.Run(app.Context())
+	return &CoreHandler{DB: app.Queries, Log: app.Logger, Chat: hub}
 }
