@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"discord/internal/db"
+	"discord/internal/service/user"
 	logger "discord/pkg/logging"
 	"log/slog"
 	"time"
@@ -16,6 +17,7 @@ type App struct {
 	ctx        context.Context
 	cancel     context.CancelFunc
 	Logger     *slog.Logger
+  UserService *user.UserService	
 	// more shared deps (e.g. Redis, Mailer, Config)
 }
 
@@ -31,7 +33,7 @@ func Setup(parentCtx context.Context) *App {
 	dbConn, err := db.NewDatabase(initCtx)
 	if err != nil {
 		cancel() // Clean up our context
-		logger.Fatal(ctx, "error", err)
+		logger.FatalCTX(ctx, "error", err)
 		return nil
 	}
 
@@ -39,16 +41,19 @@ func Setup(parentCtx context.Context) *App {
 	if err := dbConn.Ping(initCtx); err != nil {
 		dbConn.Close()
 		cancel()
-		logger.Fatal(ctx, "error", err)
+		logger.FatalCTX(ctx, "error", err)
 		return nil
 	}
+	dbCalls := db.New(dbConn)
+	uService := user.NewUserService(dbCalls)
 
 	return &App{
 		Connection: dbConn,
-		Queries:    db.New(dbConn),
+		Queries:    dbCalls,
 		Logger:     log,
 		ctx:        ctx,
 		cancel:     cancel,
+		UserService: uService,
 	}
 }
 

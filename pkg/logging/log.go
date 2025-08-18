@@ -36,12 +36,12 @@ func withRequestContext(ctx context.Context) *slog.Logger {
 }
 
 // Info logs an info message with request_id automatically injected from context
-func Info(ctx context.Context, msg string, args ...any) {
+func InfoCTX(ctx context.Context, msg string, args ...any) {
 	withRequestContext(ctx).Info(msg, args...)
 }
 
 // Error logs an error with the request_id (if available in ctx).
-func Error(ctx context.Context, msg string, err error) {
+func ErrorCTX(ctx context.Context, msg string, err error) {
 	if err == nil {
 		return
 	}
@@ -49,18 +49,18 @@ func Error(ctx context.Context, msg string, err error) {
 }
 
 // Warn logs a warning message using the logger from context.
-func Warn(ctx context.Context, msg string, args ...any) {
+func WarnCTX(ctx context.Context, msg string, args ...any) {
 	withRequestContext(ctx).Warn(msg, args...)
 }
 
 // Fatal logs a fatal error message using the logger from context and exits the program.
-func Fatal(ctx context.Context, msg string, err error, args ...any) {
+func FatalCTX(ctx context.Context, msg string, err error, args ...any) {
 	withRequestContext(ctx).Error(msg, "error", err)
 	os.Exit(1)
 }
 
 // Debug logs a debug message using the logger from context.
-func Debug(ctx context.Context, msg string, args ...any) {
+func DebugCTX(ctx context.Context, msg string, args ...any) {
 	withRequestContext(ctx).Debug(msg, args...)
 }
 

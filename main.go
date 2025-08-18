@@ -45,7 +45,7 @@ func main() {
 	go func() {
 		slog.Info("Server listening...", "port", port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal(ctx, "shutting Shutting down gracefully...", err)
+			logger.FatalCTX(ctx, "shutting Shutting down gracefully...", err)
 		}
 	}()
 
@@ -62,7 +62,7 @@ func main() {
 
 	// Stop HTTP server
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.Fatal(ctx, "Server forced to shutdown: %v", err)
+		logger.FatalCTX(ctx, "Server forced to shutdown: %v", err)
 	}
 
 	slog.Info("Server exited cleanly")

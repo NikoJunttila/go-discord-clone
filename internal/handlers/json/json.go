@@ -19,9 +19,9 @@ type errResponse struct {
 // It distinguishes between server-side (5xx) and client-side (4xx) errors for logging.
 func RespondWithError(ctx context.Context, w http.ResponseWriter, code int, msg string, err error) {
 	if code > 499 {
-		logger.Error(ctx, msg, err)
+		logger.ErrorCTX(ctx, msg, err)
 	} else {
-		logger.Warn(ctx, fmt.Sprintf("Client error response: %s", msg), "err", err)
+		logger.WarnCTX(ctx, fmt.Sprintf("Client error response: %s", msg), "err", err)
 	}
 	RespondWithJSON(ctx, w, code, errResponse{
 		Error: msg,
@@ -33,7 +33,7 @@ func RespondWithError(ctx context.Context, w http.ResponseWriter, code int, msg 
 func RespondWithJSON(ctx context.Context, w http.ResponseWriter, code int, payload any) {
 	dat, err := json.Marshal(payload)
 	if err != nil {
-		logger.Error(ctx, fmt.Sprintf("Failed to marshal JSON response %v", payload), err)
+		logger.ErrorCTX(ctx, fmt.Sprintf("Failed to marshal JSON response %v", payload), err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -41,7 +41,7 @@ func RespondWithJSON(ctx context.Context, w http.ResponseWriter, code int, paylo
 	w.WriteHeader(code)
 	_, err = w.Write(dat)
 	if err != nil {
-		logger.Error(ctx, "Failed to write JSON response", err)
+		logger.ErrorCTX(ctx, "Failed to write JSON response", err)
 	}
 }
 
@@ -57,7 +57,7 @@ func DecodeJSONBody(w http.ResponseWriter, r *http.Request, v any, maxSize int64
 	r.Body = http.MaxBytesReader(w, r.Body, maxSize)
 	defer func() {
 		if err := r.Body.Close(); err != nil {
-			logger.Error(r.Context(), "Failed to close request body", err)
+			logger.ErrorCTX(r.Context(), "Failed to close request body", err)
 		}
 	}()
 	decoder := json.NewDecoder(r.Body)

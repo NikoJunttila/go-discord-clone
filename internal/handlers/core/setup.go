@@ -2,18 +2,18 @@ package core
 
 import (
 	"discord/internal/app"
-	"discord/internal/db"
+	"discord/internal/service/user"
 	"log/slog"
 )
 
 type CoreHandler struct {
-	DB   *db.Queries
 	Log  *slog.Logger
 	Chat *ChatHub
+	UserService *user.UserService
 }
 
 func NewCoreHandler(app *app.App) *CoreHandler {
 	hub := NewChatHub()
 	go hub.Run(app.Context())
-	return &CoreHandler{DB: app.Queries, Log: app.Logger, Chat: hub}
+	return &CoreHandler{Log: app.Logger, Chat: hub, UserService: app.UserService}
 }
