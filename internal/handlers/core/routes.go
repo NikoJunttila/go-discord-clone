@@ -11,5 +11,6 @@ func (c *CoreHandler) Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/example", c.GetExample)
 	r.Get("/ws", c.GetWSChat)
+	r.Get("/user", c.GetUser)
 	return r
 }

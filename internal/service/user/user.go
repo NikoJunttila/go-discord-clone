@@ -3,26 +3,39 @@ package user
 import (
 	"context"
 	"discord/internal/db"
-	"log/slog"
+	"fmt"
 )
 
+// User is your domain entity
 type User struct {
-	ID    int
+	ID    int64
 	Email string
 	Name  string
 }
-type UserService struct {
-	DB *db.Queries
+
+// Interface for easier testing
+type Service interface {
+	GetUser(ctx context.Context, id string) (db.User, error)
 }
 
-func NewUserService(db *db.Queries) *UserService {
-	return &UserService{DB: db}
+// Concrete implementation
+type UserService struct {
+	queries Queries // wrap your db.Queries here
 }
-func (s *UserService) GetUser(ctx context.Context, id int) (*User, error) {
-	slog.Info("Calling getUser", "id", id)
-	return &User{
-		ID:    id,
-		Email: "xdd",
-		Name:  "xdd2",
-	}, nil
+
+type Queries interface {
+	GetUser(ctx context.Context, id string) (db.User, error)
+}
+
+func NewUserService(q Queries) *UserService {
+	return &UserService{queries: q}
+}
+
+func (s *UserService) GetUser(ctx context.Context, id string) (db.User, error) {
+	fmt.Println("here I do stuff then return user and error")
+	user, err := s.queries.GetUser(ctx, id)
+	if err != nil {
+		return db.User{}, err
+	}
+	return user, nil
 }

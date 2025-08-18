@@ -23,11 +23,21 @@ func (c *CoreHandler) GetExample(w http.ResponseWriter, r *http.Request) {
 		Title:  "example json",
 		Number: num,
 	}
-	user, err := c.UserService.GetUser(ctx, 1)
-if err != nil {
-		json.RespondWithError(ctx,w,http.StatusBadRequest, "error finding user", err)
-  return
-}
+	user, err := c.UserService.GetUser(ctx, "1")
+	if err != nil {
+		json.RespondWithError(ctx, w, http.StatusBadRequest, "error finding user", err)
+		return
+	}
 	logger.InfoCTX(ctx, "responding with data", "data", exampleData, "user", user)
 	json.RespondWithJSON(ctx, w, http.StatusOK, user)
+}
+
+func (c *CoreHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+	//get id from body or json request
+	user, err := c.UserService.GetUser(r.Context(), "1")
+	if err != nil {
+		json.RespondWithError(r.Context(), w, http.StatusBadRequest, "Failed to find user", err)
+		return
+	}
+	json.RespondWithJSON(r.Context(), w, http.StatusOK, user)
 }

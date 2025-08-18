@@ -15,3 +15,20 @@ type Foo struct {
 	UpdatedAt pgtype.Timestamp
 	DeletedAt pgtype.Timestamp
 }
+
+type User struct {
+	ID            string
+	LookupID      string
+	Email         string
+	PasswordHash  string
+	Secret        string
+	Name          string
+	Role          string
+	AvatarUrl     string
+	Provider      string
+	ProviderID    string
+	EmailVerified bool
+	Disabled      bool
+	CreatedAt     pgtype.Timestamp
+	UpdatedAt     pgtype.Timestamp
+}
